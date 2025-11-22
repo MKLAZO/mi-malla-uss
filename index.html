@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>USS App</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #002D72; /* Azul USS */
+            --accent: #E30613;  /* Rojo USS */
+            --bg: #F4F6F8;
+            --card-bg: #FFFFFF;
+            --text: #1F2937;
+            --gray: #64748B;
+        }
+
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 80px; /* Espacio nav bar */
+        }
+
+        /* --- HEADER LIMPIO --- */
+        .app-header {
+            background: var(--card-bg);
+            padding: 20px 20px 10px 20px;
+            position: sticky; top: 0; z-index: 10;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .greeting { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        .greeting span { color: var(--accent); }
+        .subtitle { font-size: 0.9rem; color: var(--gray); }
+
+        /* --- CONTENEDOR --- */
+        .container { padding: 20px; }
+        .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+
+        /* --- TARJETAS (Inicio) --- */
+        .subject-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; gap: 15px;
+            border: 1px solid #F1F5F9;
+            transition: transform 0.1s;
+        }
+        .subject-card:active { transform: scale(0.98); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-icon {
+            background: #EFF6FF; color: var(--primary);
+            width: 42px; height: 42px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+        }
+        .card-avg { font-size: 1.1rem; font-weight: 800; color: var(--primary); background: #F8FAFC; padding: 5px 10px; border-radius: 8px; }
+
+        /* --- TARJETAS LISTA (Malla) --- */
+        .list-item {
+            background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .item-info h4 { margin: 0; font-size: 1rem; color: var(--text); }
+        .item-info small { color: var(--gray); font-size: 0.8rem; font-weight: 600; }
+        
+        .btn-delete {
+            background: #FEF2F2; color: var(--accent); border: none;
+            width: 35px; height: 35px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+        }
+        .btn-enroll {
+            background: var(--primary); color: white; border: none;
+            padding: 8px 15px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+        }
+
+        /* --- MODAL --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100;
+            display: none; align-items: flex-end;
+        }
+        .modal.open { display: flex; animation: fadeUp 0.3s; }
+        
+        .modal-content {
+            background: #fff; width: 100%; height: 85vh;
+            border-radius: 25px 25px 0 0; padding: 25px;
+            display: flex; flex-direction: column;
+        }
+        @keyframes fadeUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* --- INPUTS & FORMS --- */
+        input, select {
+            width: 100%; padding: 12px; margin-bottom: 10px;
+            border: 1px solid #E2E8F0; border-radius: 10px;
+            font-size: 1rem; background: #F8FAFC;
+        }
+        .btn-main {
+            background: var(--primary); color: white; width: 100%;
+            padding: 15px; border: none; border-radius: 12px;
+            font-weight: bold; font-size: 1rem; margin-top: 10px;
+        }
+
+        /* --- NAVBAR --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; height: 70px; border-top: 1px solid #F1F5F9;
+            display: flex; justify-content: space-around; align-items: center; z-index: 50;
+        }
+        .nav-btn {
+            background: none; border: none; display: flex; flex-direction: column; align-items: center;
+            color: var(--gray); font-size: 0.75rem; gap: 4px; font-weight: 600;
+        }
+        .nav-btn i { font-size: 1.4rem; }
+        .nav-btn.active { color: var(--primary); }
+
+        /* Utility */
+        .view { display: none; }
+        .view.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="header-top">
+            <div class="greeting">Hola, <span>Carrillo</span></div>
+            <i class="ri-notification-3-line" style="font-size:1.3rem; color:var(--primary);"></i>
+        </div>
+        <div class="subtitle">Bienvenido a tu portal académico</div>
+    </div>
+
+    <div id="view-home" class="view active container">
+        <div class="section-title"><i class="ri-book-open-line"></i> Mis Clases</div>
+        <div id="cards-container"></div>
+        
+        <br>
+        <button onclick="finishSemester()" style="width:100%; padding:15px; background:white; border:1px solid #ddd; border-radius:12px; color:var(--gray); font-weight:600;">
+            <i class="ri-flag-line"></i> Cerrar Semestre
+        </button>
+    </div>
+
+    <div id="view-planner" class="view container">
+        <div class="section-title"><i class="ri-settings-3-line"></i> Gestión de Malla</div>
+
+        <div style="background:white; padding:20px; border-radius:16px; margin-bottom:20px; border:1px dashed var(--primary);">
+            <h4 style="margin:0 0 10px 0; color:var(--primary);">Agregar Asignatura</h4>
+            <div style="display:flex; gap:10px;">
+                <input id="new-code" placeholder="CÓDIGO" style="width:40%; text-transform:uppercase; font-weight:bold;">
+                <input id="new-name" placeholder="Nombre">
+            </div>
+            <select id="new-req"><option value="">Sin Prerrequisito</option></select>
+            <button onclick="createSubject()" class="btn-main" style="padding:10px;">Guardar</button>
+        </div>
+
+        <div id="curriculum-list"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 id="m-title" style="margin:0; font-size:1.4rem; color:var(--primary);">--</h2>
+                    <span id="m-code" style="color:var(--gray); font-weight:bold;">--</span>
+                </div>
+                <button onclick="closeModal()" style="background:#F1F5F9; border:none; width:40px; height:40px; border-radius:50%; font-size:1.2rem;"><i class="ri-close-line"></i></button>
+            </div>
+
+            <div style="background:#F8FAFC; padding:20px; border-radius:16px; text-align:center; margin-bottom:20px;">
+                <span style="color:var(--gray); font-size:0.8rem; text-transform:uppercase;">Promedio Actual</span>
+                <div id="m-avg" style="font-size:2.5rem; font-weight:800; color:var(--primary);">--</div>
+            </div>
+
+            <div style="flex:1; overflow-y:auto;" id="eval-list"></div>
+
+            <button class="btn-main" onclick="addEval()"><i class="ri-add-line"></i> Agregar Nota</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn active" onclick="switchTab('view-home', this)">
+            <i class="ri-home-5-line"></i> Inicio
+        </button>
+        <button class="nav-btn" onclick="switchTab('view-planner', this)">
+            <i class="ri-list-check"></i> Malla
+        </button>
+    </div>
+
+<script>
+    let app = { curriculum: [], current: [], passed: [], data: {} };
+
+    // Iniciar
+    function init() {
+        const data = localStorage.getItem('ussAppClean');
+        if(data) app = JSON.parse(data);
+        else {
+            app.curriculum = [{code:'MAT101', name:'Cálculo I', req:''}, {code:'BIO100', name:'Biología', req:''}];
+            app.current = ['MAT101'];
+            app.data = {'MAT101': {evals:[{name:'Solemne 1', weight:30, grade:4.5}]}};
+        }
+        render();
+    }
+    function save() { localStorage.setItem('ussAppClean', JSON.stringify(app)); }
+    function render() { renderHome(); renderList(); updateSelect(); }
+
+    // --- HOME ---
+    function renderHome() {
+        const box = document.getElementById('cards-container');
+        box.innerHTML = '';
+        if(app.current.length===0) return box.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No hay clases activas.</p>';
+
+        app.current.forEach(code => {
+            const sub = app.curriculum.find(c => c.code === code);
+            if(!sub) return;
+            const avg = getAvg(code);
+            const color = avg >= 4.0 ? '#10B981' : (avg > 0 ? '#EF4444' : '#002D72');
+
+            box.innerHTML += `
+                <div class="subject-card" onclick="openModal('${code}')">
+                    <div class="card-header">
+                        <div style="display:flex; gap:15px;">
+                            <div class="card-icon"><i class="ri-book-mark-line"></i></div>
+                            <div>
+                                <div style="font-weight:700; font-size:1.05rem;">${sub.name}</div>
+                                <div style="font-size:0.8rem; color:var(--gray);">${sub.code}</div>
+                            </div>
+                        </div>
+                        <div class="card-avg" style="color:${color}">${avg || '--'}</div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // --- LISTA MALLA ---
+    function renderList() {
+        const list = document.getElementById('curriculum-list');
+        list.innerHTML = '';
+        
+        app.curriculum.forEach(sub => {
+            const isTaking = app.current.includes(sub.code);
+            const isPassed = app.passed.includes(sub.code);
+            const reqMet = !sub.req || app.passed.includes(sub.req);
+
+            let btn = '';
+            if(isPassed) btn = '<span style="color:#10B981; font-weight:bold; font-size:0.8rem;">APROBADO</span>';
+            else if(isTaking) btn = '<span style="color:var(--primary); font-weight:bold; font-size:0.8rem;">CURSANDO</span>';
+            else if(!reqMet) btn = '<i class="ri-lock-line" style="color:#ccc;"></i>';
+            else btn = `<button class="btn-enroll" onclick="enroll('${sub.code}')">Inscribir</button>`;
+
+            list.innerHTML += `
+                <div class="list-item">
+                    <div class="item-info">
+                        <h4>${sub.name}</h4>
+                        <small>${sub.code}</small>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${btn}
+                        <button class="btn-delete" onclick="delSubject('${sub.code}')"><i class="ri-delete-bin-line"></i></button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // --- LOGICA ---
+    function createSubject() {
+        const code = document.getElementById('new-code').value.toUpperCase();
+        const name = document.getElementById('new-name').value;
+        const req = document.getElementById('new-req').value;
+        if(!code || !name) return alert("Faltan datos");
+        if(app.curriculum.find(c=>c.code===code)) return alert("Ya existe");
+        
+        app.curriculum.push({code, name, req});
+        document.getElementById('new-code').value = '';
+        document.getElementById('new-name').value = '';
+        save(); render();
+    }
+
+    function delSubject(code) {
+        if(!confirm(`¿Eliminar ${code} de forma permanente?`)) return;
+        app.curriculum = app.curriculum.filter(c=>c.code!==code);
+        app.current = app.current.filter(c=>c!==code);
+        app.passed = app.passed.filter(c=>c!==code);
+        delete app.data[code];
+        save(); render();
+    }
+
+    function enroll(code) {
+        app.current.push(code);
+        save(); render();
+    }
+
+    function updateSelect() {
+        const s = document.getElementById('new-req');
+        s.innerHTML = '<option value="">Sin Prerrequisito</option>';
+        app.curriculum.forEach(c => s.innerHTML += `<option value="${c.code}">${c.name}</option>`);
+    }
+
+    function finishSemester() {
+        if(!confirm("¿Cerrar semestre?")) return;
+        const passed = [];
+        app.current.forEach(c => { if(parseFloat(getAvg(c))>=4.0) passed.push(c); });
+        app.passed = [...app.passed, ...passed];
+        app.current = [];
+        app.data = {};
+        save(); render();
+        switchTab('view-planner', document.querySelectorAll('.nav-btn')[1]);
+    }
+
+    // --- MODAL & NOTAS ---
+    let activeCode = null;
+    function openModal(code) {
+        activeCode = code;
+        const sub = app.curriculum.find(c=>c.code===code);
+        if(!app.data[code]) app.data[code] = {evals:[]};
+        document.getElementById('m-title').innerText = sub.name;
+        document.getElementById('m-code').innerText = code;
+        renderEvals();
+        document.getElementById('modal').classList.add('open');
+    }
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+    function renderEvals() {
+        const list = document.getElementById('eval-list');
+        list.innerHTML = '';
+        app.data[activeCode].evals.forEach((ev, i) => {
+            list.innerHTML += `
+                <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                    <input value="${ev.name}" onchange="updEv(${i},'name',this.value)" style="margin:0; border:none; font-weight:bold; padding:5px 0; background:white;" placeholder="Nombre">
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" value="${ev.grade}" oninput="updEv(${i},'grade',this.value)" placeholder="Nota" style="text-align:center;">
+                        <input type="number" value="${ev.weight}" oninput="updEv(${i},'weight',this.value)" placeholder="%" style="text-align:center;">
+                        <button onclick="delEv(${i})" style="background:#FEF2F2; color:red; border:none; border-radius:8px; width:40px;"><i class="ri-delete-bin-line"></i></button>
+                    </div>
+                </div>`;
+        });
+        const avg = getAvg(activeCode);
+        document.getElementById('m-avg').innerText = avg || '--';
+        document.getElementById('m-avg').style.color = avg >= 4.0 ? '#10B981' : (avg>0?'#EF4444':'#002D72');
+    }
+
+    function updEv(i, f, v) { app.data[activeCode].evals[i][f] = v; save(); if(f!=='name') renderEvals(); else renderHome(); }
+    function addEval() { app.data[activeCode].evals.push({name:'', grade:'', weight:''}); save(); renderEvals(); }
+    function delEv(i) { app.data[activeCode].evals.splice(i,1); save(); renderEvals(); }
+
+    function getAvg(code) {
+        const evals = app.data[code]?.evals || [];
+        if(!evals.length) return '';
+        let sum = 0;
+        evals.forEach(e => {
+            const g = parseFloat(e.grade); const w = parseFloat(e.weight);
+            if(!isNaN(g) && !isNaN(w)) sum += g*(w/100);
+        });
+        return sum === 0 ? '' : sum.toFixed(1);
+    }
+
+    function switchTab(id, btn) {
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    init();
+</script>
+</body>
+</html>
